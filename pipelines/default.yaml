@@ -1,0 +1,58 @@
+name: default-pipeline
+version: "1.0.0"
+description: "Default CI/CD pipeline with lint, test, build, and deploy stages"
+
+environment:
+  APP_NAME: delivery-flow
+  APP_VERSION: "1.0.0"
+
+stages:
+  - name: lint
+    command: "echo 'Running linting checks...' && python3 -m py_compile src/delivery_flow/__init__.py && echo 'Lint passed!'"
+    timeout: 60
+    retry_count: 0
+    allow_failure: false
+
+  - name: test
+    command: "python3 -m pytest tests/ -v --tb=short"
+    timeout: 300
+    retry_count: 1
+    allow_failure: false
+    depends_on:
+      - lint
+
+  - name: build
+    command: "echo 'Building application...' && mkdir -p build && echo 'Build successful!' > build/output.txt && echo 'Build complete!'"
+    timeout: 120
+    retry_count: 0
+    allow_failure: false
+    depends_on:
+      - test
+
+  - name: deploy_staging
+    command: "echo 'Deploying to staging...' && echo 'Staging deployment complete!'"
+    timeout: 180
+    retry_count: 2
+    allow_failure: false
+    depends_on:
+      - build
+    environment:
+      DEPLOY_ENV: staging
+
+  - name: deploy_production
+    command: "echo 'Deploying to production...' && echo 'Production deployment complete!'"
+    timeout: 180
+    retry_count: 1
+    allow_failure: false
+    depends_on:
+      - deploy_staging
+    environment:
+      DEPLOY_ENV: production
+
+notifications:
+  on_success: true
+  on_failure: true
+
+artifacts:
+  - build/
+  - reports/

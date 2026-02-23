@@ -1,0 +1,26 @@
+name: quick-test-pipeline
+version: "1.0.0"
+description: "Quick test pipeline for validation"
+
+stages:
+  - name: hello
+    command: "echo 'Hello from DeliveryFlow!'"
+    timeout: 30
+
+  - name: check_python
+    command: "python3 --version"
+    timeout: 30
+    depends_on:
+      - hello
+
+  - name: list_files
+    command: "ls -la"
+    timeout: 30
+    depends_on:
+      - check_python
+
+  - name: run_date
+    command: "date"
+    timeout: 30
+    depends_on:
+      - list_files

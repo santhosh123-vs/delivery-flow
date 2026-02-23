@@ -1,0 +1,38 @@
+name: staging-pipeline
+version: "1.0.0"
+description: "Staging deployment pipeline"
+
+environment:
+  APP_ENV: staging
+  DEBUG: "false"
+
+stages:
+  - name: validate
+    command: "echo 'Validating staging config...' && echo 'Config valid!'"
+    timeout: 30
+
+  - name: test
+    command: "python3 -m pytest tests/ -v --tb=short"
+    timeout: 300
+    retry_count: 2
+    depends_on:
+      - validate
+
+  - name: build
+    command: "echo 'Building for staging...' && mkdir -p build && echo 'staging-build' > build/staging.txt && echo 'Build done!'"
+    timeout: 120
+    depends_on:
+      - test
+
+  - name: deploy
+    command: "echo 'Deploying to staging environment...' && echo 'Staging live!'"
+    timeout: 180
+    retry_count: 1
+    depends_on:
+      - build
+
+  - name: smoke_test
+    command: "echo 'Running smoke tests...' && echo 'All smoke tests passed!'"
+    timeout: 60
+    depends_on:
+      - deploy
